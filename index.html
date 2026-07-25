@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Job Board</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen p-6">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold text-center mb-8 text-indigo-600">Smart Job Board</h1>
+
+        <!-- Job Submission Form -->
+        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-xl font-semibold mb-4">Post a New Job</h2>
+            <form id="jobForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Job Title</label>
+                    <input type="text" id="title" required class="w-full mt-1 p-2 border rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Company</label>
+                    <input type="text" id="company" required class="w-full mt-1 p-2 border rounded-md">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Description</label>
+                    <textarea id="description" required rows="3" class="w-full mt-1 p-2 border rounded-md"></textarea>
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 text-white p-2 rounded-md hover:bg-indigo-700 font-medium">Post Job</button>
+            </form>
+        </div>
+
+        <!-- Job Listings -->
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-xl font-semibold mb-4">Available Jobs</h2>
+            <div id="jobList" class="space-y-4">
+                <!-- Dynamic jobs will load here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://smart-job-board-api.vercel.app';
+
+        async function fetchJobs() {
+            try {
+                const response = await fetch(`${API_URL}/api/jobs`);
+                const jobs = await response.json();
+                const jobList = document.getElementById('jobList');
+                jobList.innerHTML = '';
+
+                if (jobs.length === 0) {
+                    jobList.innerHTML = '<p class="text-gray-500">No jobs posted yet.</p>';
+                    return;
+                }
+
+                jobs.forEach(job => {
+                    const jobCard = document.createElement('div');
+                    jobCard.className = 'border p-4 rounded-md shadow-sm bg-gray-50';
+                    jobCard.innerHTML = `
+                        <h3 class="text-lg font-bold text-gray-800">${job.title}</h3>
+                        <p class="text-sm font-semibold text-indigo-600">${job.company}</p>
+                        <p class="text-gray-600 mt-2">${job.description}</p>
+                    `;
+                    jobList.appendChild(jobCard);
+                });
+            } catch (error) {
+                console.error('Error fetching jobs:', error);
+            }
+        }
+
+        document.getElementById('jobForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const title = document.getElementById('title').value;
+            const company = document.getElementById('company').value;
+            const description = document.getElementById('description').value;
+
+            try {
+                const response = await fetch(`${API_URL}/api/jobs`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, company, description })
+                });
+
+                if (response.ok) {
+                    document.getElementById('jobForm').reset();
+                    fetchJobs();
+                } else {
+                    alert('Failed to post job');
+                }
+            } catch (error) {
+                console.error('Error posting job:', error);
+            }
+        });
+
+        fetchJobs();
+    </script>
+</body>
+</html>
